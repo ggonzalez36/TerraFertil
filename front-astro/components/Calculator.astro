@@ -1,0 +1,161 @@
+---
+// Calculadora de inversiones
+---
+
+<section id="calculadora" class="py-24 bg-white">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-verde-100 text-verde-700 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-4">
+                Herramienta
+            </span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-verde-900 mb-4">
+                Calculadora de inversiones
+            </h2>
+            <p class="text-tierra-600 text-lg">Estima tus rendimientos potenciales según tu inversión inicial.</p>
+        </div>
+
+        <div class="bg-terra-50 border border-tierra-100 rounded-2xl p-8">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-verde-900 mb-2">
+                        Monto a invertir: <span id="invAmount" class="text-terra-600">$5,000 USD</span>
+                    </label>
+                    <input type="range" id="investment" min="500" max="100000" value="5000" step="500"
+                        class="w-full h-2 bg-tierra-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-tierra-500 mt-2">
+                        <span>$500</span>
+                        <span>$100,000</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-verde-900 mb-2">
+                        Rendimiento anual esperado: <span id="returnRate" class="text-terra-600">11.5%</span>
+                    </label>
+                    <input type="range" id="return" min="8" max="16" value="11.5" step="0.5"
+                        class="w-full h-2 bg-verde-300 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-tierra-500 mt-2">
+                        <span>8%</span>
+                        <span>16%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-verde-900 mb-2">
+                        Plazo de inversión (años): <span id="years" class="text-terra-600">5</span>
+                    </label>
+                    <input type="range" id="period" min="1" max="20" value="5" step="1"
+                        class="w-full h-2 bg-tierra-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-tierra-500 mt-2">
+                        <span>1 año</span>
+                        <span>20 años</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div class="mt-8 pt-8 border-t border-tierra-100">
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white rounded-lg p-4 text-center">
+                        <p class="text-xs text-tierra-500 mb-1">Inversión inicial</p>
+                        <p class="font-display font-bold text-xl text-verde-900">$<span id="principal">5,000</span>
+                        </p>
+                    </div>
+                    <div class="bg-verde-50 rounded-lg p-4 text-center border border-verde-200">
+                        <p class="text-xs text-tierra-500 mb-1">Ganancia esperada</p>
+                        <p class="font-display font-bold text-xl text-verde-600">$<span id="profit">3,245</span></p>
+                    </div>
+                    <div class="bg-terra-100 rounded-lg p-4 text-center border border-terra-200">
+                        <p class="text-xs text-tierra-500 mb-1">Capital final</p>
+                        <p class="font-display font-bold text-xl text-terra-800">$<span id="final">8,245</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="startWithAmount"
+                class="w-full mt-6 bg-verde-600 hover:bg-verde-700 text-white font-semibold py-3 rounded-lg transition-colors">
+                Iniciar con este monto
+            </button>
+        </div>
+    </div>
+</section>
+
+<script>
+    const API_BASE_URL = (() => {
+        const host = window.location.hostname || 'localhost';
+        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        return `${protocol}//${host}:8080`;
+    })();
+    const investment = document.getElementById('investment');
+    const returnRate = document.getElementById('return');
+    const period = document.getElementById('period');
+    const startWithAmountBtn = document.getElementById('startWithAmount');
+    let calcAbortController = null;
+
+    function updateCalculatorUI(principal, annualRatePercent, years, finalAmount, profit) {
+        document.getElementById('invAmount').textContent = `$${principal.toLocaleString('es-MX', { maximumFractionDigits: 0 })} USD`;
+        document.getElementById('returnRate').textContent = `${annualRatePercent}%`;
+        document.getElementById('years').textContent = years;
+        document.getElementById('principal').textContent = Math.round(principal).toLocaleString('es-MX', { maximumFractionDigits: 0 });
+        document.getElementById('profit').textContent = Math.round(profit).toLocaleString('es-MX', { maximumFractionDigits: 0 });
+        document.getElementById('final').textContent = Math.round(finalAmount).toLocaleString('es-MX', { maximumFractionDigits: 0 });
+    }
+
+    function calculateLocal(principal, annualRatePercent, years) {
+        const rate = annualRatePercent / 100;
+        const finalAmount = principal * Math.pow(1 + rate, years);
+        const profit = finalAmount - principal;
+        return { finalAmount, profit };
+    }
+
+    async function updateCalculator() {
+        const principal = parseFloat(investment.value);
+        const annualRatePercent = parseFloat(returnRate.value);
+        const years = parseInt(period.value);
+
+        if (calcAbortController) {
+            calcAbortController.abort();
+        }
+        calcAbortController = new AbortController();
+
+        try {
+            const resp = await fetch(`${API_BASE_URL}/api/investment/simulate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    principal,
+                    annualRate: annualRatePercent,
+                    years,
+                }),
+                signal: calcAbortController.signal,
+            });
+
+            if (!resp.ok) {
+                throw new Error('API no disponible');
+            }
+
+            const data = await resp.json();
+            updateCalculatorUI(principal, annualRatePercent, years, data.finalAmount, data.profit);
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                return;
+            }
+
+            const local = calculateLocal(principal, annualRatePercent, years);
+            updateCalculatorUI(principal, annualRatePercent, years, local.finalAmount, local.profit);
+        }
+    }
+
+    investment.addEventListener('input', updateCalculator);
+    returnRate.addEventListener('input', updateCalculator);
+    period.addEventListener('input', updateCalculator);
+
+    updateCalculator();
+
+    startWithAmountBtn.addEventListener('click', () => {
+        const waitlistAnchor = document.getElementById('lista-espera');
+        if (waitlistAnchor) {
+            waitlistAnchor.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+</script>
