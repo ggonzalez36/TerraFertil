@@ -1,0 +1,64 @@
+---
+// FAQ
+const faqs = [
+  {
+    q: '¿Qué es el crowdfunding inmobiliario?',
+    a: 'Es un modelo de inversión colectiva donde múltiples inversores juntan capital para financiar proyectos inmobiliarios. Cada inversor recibe una participación proporcional en los rendimientos del proyecto.',
+  },
+  {
+    q: '¿Cuál es la inversión mínima?',
+    a: 'La inversión mínima varía por proyecto, pero comienza desde $500 USD. Esto te permite diversificar en varios proyectos simultáneamente con montos accesibles.',
+  },
+  {
+    q: '¿Cómo se generan los rendimientos?',
+    a: 'Los rendimientos provienen de dos fuentes: las rentas generadas por la propiedad durante la vida del proyecto y la plusvalía al momento de la venta. Las distribuciones se realizan trimestralmente.',
+  },
+  {
+    q: '¿Qué pasa si quiero retirar mi inversión antes del plazo?',
+    a: 'Los proyectos tienen un plazo definido (generalmente 3-5 años). TerraFertil ofrece un mercado secundario donde puedes vender tu participación a otros inversores antes del vencimiento, sujeto a disponibilidad.',
+  },
+  {
+    q: '¿Qué tan segura es mi inversión?',
+    a: 'Cada proyecto está respaldado por activos inmobiliarios reales y contratos legalmente vinculantes. Además, los fondos de los inversores se mantienen segregados de los fondos operativos de TerraFertil.',
+  },
+  {
+    q: '¿En qué países está disponible TerraFertil?',
+    a: 'Actualmente operamos en México y estamos en proceso de expansión a Colombia, Chile y Perú. Únete a la lista de espera para ser de los primeros en acceder a tu país.',
+  },
+];
+---
+
+<section id="faq" class="py-24 bg-terra-50">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-14">
+      <span class="inline-block bg-verde-100 text-verde-700 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-4">
+        FAQ
+      </span>
+      <h2 class="font-display text-3xl sm:text-4xl font-bold text-verde-900 mb-4">
+        Preguntas frecuentes
+      </h2>
+      <p class="text-tierra-600 text-lg">¿Tienes dudas? Aquí respondemos las más comunes.</p>
+    </div>
+
+    <div class="space-y-4">
+      {faqs.map((faq) => (
+        <details class="group bg-white border border-tierra-100 rounded-2xl overflow-hidden">
+          <summary class="flex items-center justify-between cursor-pointer px-6 py-5 font-semibold text-verde-900 list-none">
+            <span>{faq.q}</span>
+            <svg 
+              class="w-5 h-5 text-verde-500 flex-shrink-0 group-open:rotate-180 transition-transform" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="px-6 pb-5 text-tierra-600 text-sm leading-relaxed border-t border-tierra-50">
+            <div class="pt-4">{faq.a}</div>
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

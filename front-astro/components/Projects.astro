@@ -1,0 +1,140 @@
+// Proyectos destacados (mock)
+const projects = [
+{
+name: ‘Torre Verde Residencial’,
+location: ‘Monterrey, NL’,
+type: ‘Residencial’,
+return: ‘12.5%’,
+minInvestment: ‘$500’,
+funded: 68,
+total: ‘500,000’,
+raised: ‘340,000’,
+investors: 230,
+badge: ‘Disponible’,
+badgeColor: ‘bg-verde-100 text-verde-700’,
+},
+{
+name: ‘Plaza Comercial Querétaro’,
+location: ‘Querétaro, QRO’,
+type: ‘Comercial’,
+return: ‘10.8%’,
+minInvestment: ‘$1,000’,
+funded: 45,
+total: ‘1,200,000’,
+raised: ‘540,000’,
+investors: 187,
+badge: ‘Nuevo’,
+badgeColor: ‘bg-terra-100 text-terra-700’,
+},
+{
+name: ‘Vacacional Los Cabos’,
+location: ‘Los Cabos, BCS’,
+type: ‘Vacacional’,
+return: ‘15.2%’,
+minInvestment: ‘$2,000’,
+funded: 91,
+total: ‘800,000’,
+raised: ‘728,000’,
+investors: 312,
+badge: ‘Últimos lugares’,
+badgeColor: ‘bg-amber-100 text-amber-700’,
+},
+];
+
+<section id="proyectos" class="py-24 bg-terra-50">
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+
+    <div class="text-center mb-14">
+
+      <span class="inline-block bg-verde-100 text-verde-700 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-4">
+
+        Oportunidades
+
+      </span>
+
+      <h2 class="font-display text-3xl sm:text-4xl font-bold text-verde-900 mb-4">
+
+        Proyectos destacados
+
+      </h2>
+
+      <p class="text-tierra-600 text-lg max-w-xl mx-auto">
+
+        Cada proyecto es analizado por nuestro equipo de expertos en bienes raíces antes de ser publicado.
+
+      </p>
+
+    </div>
+
+<div class="grid md:grid-cols-3 gap-8">
+  {projects.map((p) => (
+    <article class="bg-white rounded-2xl border border-tierra-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <!-- Image placeholder -->
+      <div class="h-44 bg-gradient-to-br from-tierra-100 to-verde-100 flex items-center justify-center relative">
+        <svg class="w-16 h-16 text-verde-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+        <span class={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${p.badgeColor}`}>
+          {p.badge}
+        </span>
+        <span class="absolute top-3 right-3 text-xs text-tierra-600 bg-white/80 px-2 py-0.5 rounded-full">
+          {p.type}
+        </span>
+      </div>
+
+      <div class="p-5">
+        <div class="flex items-start justify-between mb-1">
+          <h3 class="font-semibold text-verde-900 text-base leading-tight">{p.name}</h3>
+        </div>
+        <p class="text-tierra-500 text-xs mb-4 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          {p.location}
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-terra-50 rounded-xl p-3 text-center">
+            <p class="text-xs text-tierra-500 mb-0.5">Rendimiento anual</p>
+            <p class="font-bold text-verde-700 text-xl">{p.return}</p>
+          </div>
+          <div class="bg-terra-50 rounded-xl p-3 text-center">
+            <p class="text-xs text-tierra-500 mb-0.5">Inversión mínima</p>
+            <p class="font-bold text-terra-600 text-xl">{p.minInvestment}</p>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs text-tierra-500 mb-1.5">
+            <span>{p.funded}% fondeado</span>
+            <span>{p.investors} inversores</span>
+          </div>
+          <div class="w-full bg-tierra-100 rounded-full h-2">
+            <div class="bg-verde-500 h-2 rounded-full transition-all" style={`width:${p.funded}%`}></div>
+          </div>
+        </div>
+
+        <button
+          class="w-full bg-verde-600 hover:bg-verde-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+        >
+          Ver proyecto →
+        </button>
+      </div>
+    </article>
+  ))}
+</div>
+
+<div class="text-center mt-10">
+  <a href="#lista-espera" class="inline-flex items-center gap-2 border-2 border-verde-600 text-verde-700 hover:bg-verde-600 hover:text-white font-semibold px-8 py-3 rounded-full transition-colors">
+    Ver todos los proyectos
+  </a>
+</div>
+
+</div>
+
+</section>

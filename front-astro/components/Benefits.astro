@@ -1,0 +1,60 @@
+---
+// Beneficios
+const benefits = [
+  {
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />',
+    title: 'Acceso democratizado',
+    desc: 'Lo que antes requería millones, hoy está disponible desde $500 USD. El mercado inmobiliario es para todos.',
+  },
+  {
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />',
+    title: 'Seguridad jurídica',
+    desc: 'Cada inversión está respaldada por contratos legalmente vinculantes y auditados por firmas especializadas.',
+  },
+  {
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />',
+    title: 'Transparencia total',
+    desc: 'Dashboard en tiempo real con el estado de tu inversión, documentos del proyecto y reportes financieros.',
+  },
+  {
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
+    title: 'Rendimientos periódicos',
+    desc: 'Recibe ingresos pasivos de forma trimestral. Tu dinero trabaja para ti sin esfuerzo adicional.',
+  },
+  {
+    icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />',
+    title: 'Equipo experto',
+    desc: 'Nuestro equipo cuenta con más de 20 años de experiencia en desarrollo y gestión inmobiliaria en México.',
+  },
+];
+---
+
+<section id="beneficios" class="py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <span class="inline-block bg-terra-100 text-terra-700 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-4">
+        Por qué TerraFertil
+      </span>
+      <h2 class="font-display text-3xl sm:text-4xl font-bold text-verde-900 mb-4">
+        La plataforma que tu patrimonio merece
+      </h2>
+      <p class="text-terra-600 text-lg max-w-2xl mx-auto">
+        Combinamos tecnología, experiencia inmobiliaria y rigor legal para darte la mejor experiencia de inversión.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {benefits.map((b) => (
+        <div class="flex gap-4 p-6 rounded-2xl hover:bg-terra-50 transition-colors">
+          <div class="w-12 h-12 rounded-xl bg-verde-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-verde-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" set:html={b.icon} />
+          </div>
+          <div>
+            <h3 class="font-semibold text-verde-900 mb-1">{b.title}</h3>
+            <p class="text-terra-600 text-sm leading-relaxed">{b.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

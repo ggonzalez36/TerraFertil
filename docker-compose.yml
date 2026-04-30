@@ -1,0 +1,33 @@
+services:
+  ai-module:
+    build:
+      context: ./ai-module
+      dockerfile: Dockerfile
+    container_name: terrafertil-ai-module
+    environment:
+      BACKEND_API_URL: http://backend-go:8080
+      AI_DATABASE_PATH: /data/ai_module.db
+    ports:
+      - "8001:8001"
+    volumes:
+      - ai_data:/data
+    restart: unless-stopped
+
+  backend-go:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+    container_name: terrafertil-backend-go
+    environment:
+      PORT: "8080"
+      AI_SERVICE_URL: http://ai-module:8001
+      DATABASE_PATH: /data/terrafertil.db
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_data:/data
+    restart: unless-stopped
+
+volumes:
+  backend_data:
+  ai_data:
