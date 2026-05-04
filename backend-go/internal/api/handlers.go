@@ -37,6 +37,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
  mux.HandleFunc("POST /api/investment/simulate", s.handleSimulateInvestment)
  mux.HandleFunc("POST /api/ai/risk-score", s.handleRiskScore)
  mux.HandleFunc("POST /api/onboarding", s.handleOnboarding)
+ mux.HandleFunc("POST /api/auth/login", s.handleLogin)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -168,4 +169,30 @@ func respondJSON(w http.ResponseWriter, code int, data any) {
  w.Header().Set("Content-Type", "application/json")
  w.WriteHeader(code)
  _ = json.NewEncoder(w).Encode(data)
+}
+
+// Mock login handler
+type LoginRequest struct {
+ Email    string `json:"email"`
+ Password string `json:"password"`
+ Remember bool   `json:"remember"`
+}
+
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+ var req LoginRequest
+ if err := decodeJSON(r.Body, &req); err != nil {
+  respondError(w, http.StatusBadRequest, "invalid request body")
+  return
+ }
+
+ if req.Email == "" || req.Password == "" {
+  respondError(w, http.StatusBadRequest, "email and password are required")
+  return
+ }
+
+ // Mock success for any email/password combo for MVP purposes
+ respondJSON(w, http.StatusOK, map[string]string{
+  "token": "mock-jwt-token-for-terrafertil-dashboard",
+  "email": req.Email,
+ })
 }

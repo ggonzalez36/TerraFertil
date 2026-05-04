@@ -19,23 +19,30 @@
         Invierte en bienes raíces <span class="text-terra-600">desde $500 USD</span>
       </h1>
       <p class="text-tierra-700 text-lg sm:text-xl leading-relaxed mb-10 max-w-lg">
-        TerraFertil democratiza el acceso al mercado inmobiliario. Diversifica tu patrimonio invirtiendo en proyectos cuidadosamente seleccionados, con total transparencia y sin complicaciones.
+        Olvídate de necesitar millones para invertir en bienes raíces. Conectamos tu capital con proyectos inmobiliarios de alto potencial, previamente auditados por expertos. Genera ingresos pasivos y diversifica tu portafolio de forma segura, 100% digital y sin dolores de cabeza.
       </p>
-      <form class="flex flex-col sm:flex-row gap-3 max-w-md">
+      <div class="mb-4">
+        <p class="font-semibold text-verde-900 mb-1">Únete a la lista de espera para ser de los primeros en invertir.</p>
+        <p class="text-sm text-tierra-600">Accede a oportunidades exclusivas antes de nuestro lanzamiento oficial.</p>
+      </div>
+      <form id="heroForm" class="flex flex-col sm:flex-row gap-3 max-w-md">
         <input
           type="email"
+          id="heroEmail"
           placeholder="tu@correo.com"
           required
           class="flex-1 px-4 py-3 rounded-full border border-tierra-300 bg-white focus:outline-none focus:ring-2 focus:ring-verde-400 text-gray-700 placeholder-tierra-400"
         />
         <button
           type="submit"
+          id="heroSubmit"
           class="bg-verde-600 hover:bg-verde-700 active:bg-verde-800 text-white font-semibold px-7 py-3 rounded-full transition-colors whitespace-nowrap"
         >
           Únete a la lista
         </button>
       </form>
       <p class="text-tierra-500 text-sm mt-3">Sin tarjeta de crédito. Sin compromiso.</p>
+      <div id="heroMessage" class="hidden mt-3 text-sm font-medium px-4 py-2 rounded-lg"></div>
     </div>
 
     <div class="hidden lg:flex justify-center">
@@ -83,3 +90,51 @@
     </div>
   </div>
 </section>
+
+<script>
+  const API_BASE_URL = (() => {
+    const host = window.location.hostname || 'localhost';
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${host}:8080`;
+  })();
+
+  const heroForm = document.getElementById('heroForm');
+  const heroEmail = document.getElementById('heroEmail');
+  const heroSubmit = document.getElementById('heroSubmit');
+  const heroMessage = document.getElementById('heroMessage');
+
+  heroForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = heroEmail.value.trim();
+    if (!email) return;
+
+    heroSubmit.disabled = true;
+    heroSubmit.textContent = 'Enviando...';
+    heroMessage.className = 'hidden mt-3 text-sm font-medium px-4 py-2 rounded-lg';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/onboarding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'landing-hero' })
+      });
+
+      if (response.status === 201) {
+        heroMessage.textContent = '¡Gracias! Te has unido a la lista de espera correctamente.';
+        heroMessage.className = 'mt-3 text-sm font-medium px-4 py-2 rounded-lg bg-verde-100 text-verde-800';
+        heroForm.reset();
+      } else if (response.status === 409) {
+        heroMessage.textContent = 'Este correo ya se encuentra en nuestra lista de espera.';
+        heroMessage.className = 'mt-3 text-sm font-medium px-4 py-2 rounded-lg bg-amber-100 text-amber-800';
+      } else {
+        throw new Error('Error en el servidor');
+      }
+    } catch (error) {
+      heroMessage.textContent = 'Hubo un error al procesar tu solicitud. Intenta nuevamente más tarde.';
+      heroMessage.className = 'mt-3 text-sm font-medium px-4 py-2 rounded-lg bg-red-100 text-red-800';
+    } finally {
+      heroSubmit.disabled = false;
+      heroSubmit.textContent = 'Únete a la lista';
+    }
+  });
+</script>

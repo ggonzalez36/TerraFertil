@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="TerraFertil | Dashboard">
+  <div class="min-h-screen bg-slate-50 flex flex-col">
+    <!-- Navbar del Dashboard -->
+    <header class="bg-white border-b border-tierra-100 py-4 px-6">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-verde-600 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0110.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+            </svg>
+          </div>
+          <span class="font-display font-bold text-xl text-verde-900">TerraFertil</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm font-medium text-tierra-600 hidden sm:inline-block">Inversor Verificado</span>
+          <button id="logoutBtn" class="text-sm text-red-600 font-semibold hover:text-red-700 transition">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-12">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-verde-900 mb-2">Bienvenido a tu panel de inversión</h1>
+        <p class="text-tierra-600">Aquí podrás gestionar tus inversiones inmobiliarias de forma segura y transparente.</p>
+      </div>
+
+      <!-- Resumen -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-tierra-100 p-6">
+          <p class="text-sm text-tierra-500 font-medium mb-1">Capital Invertido</p>
+          <p class="font-numbers text-3xl font-black text-verde-900">$0.00 <span class="text-lg text-tierra-400 font-medium">USD</span></p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-tierra-100 p-6">
+          <p class="text-sm text-tierra-500 font-medium mb-1">Rendimientos Generados</p>
+          <p class="font-numbers text-3xl font-black text-verde-600">$0.00 <span class="text-lg text-tierra-400 font-medium">USD</span></p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-tierra-100 p-6">
+          <p class="text-sm text-tierra-500 font-medium mb-1">Proyectos Activos</p>
+          <p class="font-numbers text-3xl font-black text-terra-600">0</p>
+        </div>
+      </div>
+
+      <!-- Call to Action Interno -->
+      <div class="bg-verde-50 rounded-2xl border border-verde-100 p-8 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <h3 class="text-xl font-bold text-verde-900 mb-2">Aún no tienes inversiones activas</h3>
+          <p class="text-verde-700">Explora las oportunidades inmobiliarias verificadas y empieza a construir tu portafolio desde $500 USD.</p>
+        </div>
+        <a href="/#proyectos" class="bg-verde-600 hover:bg-verde-700 text-white font-semibold py-3 px-6 rounded-full transition whitespace-nowrap">
+          Explorar Proyectos
+        </a>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  // Protección de ruta (Frontend)
+  document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      // Redirigir si no hay token
+      window.location.href = '/login';
+    }
+
+    // Lógica de Logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn?.addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    });
+  });
+</script>

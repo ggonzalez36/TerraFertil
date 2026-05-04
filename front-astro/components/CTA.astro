@@ -15,21 +15,72 @@
         Únete a nuestra lista de espera y obtén acceso prioritario a los mejores proyectos, beneficios exclusivos y comisiones reducidas en tu primera inversión.
       </p>
 
-      <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
+      <form id="ctaForm" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
         <input
           type="email"
+          id="ctaEmail"
           placeholder="tu@correo.com"
           required
           class="flex-1 px-4 py-3 rounded-full border border-tierra-300 bg-white focus:outline-none focus:ring-2 focus:ring-verde-400 text-gray-700 placeholder-tierra-400"
         />
         <button
           type="submit"
+          id="ctaSubmit"
           class="bg-verde-600 hover:bg-verde-700 text-white font-semibold px-7 py-3 rounded-full transition-colors whitespace-nowrap"
         >
           Reservar mi lugar
         </button>
       </form>
       <p class="text-tierra-400 text-sm">+1,000 personas ya se registraron · Sin spam · Cancela cuando quieras</p>
+      <div id="ctaMessage" class="hidden mt-4 text-sm font-medium px-4 py-2 rounded-lg"></div>
     </div>
-  </div>
 </section>
+
+<script>
+  // We can reuse the same logic or be self-contained.
+  const API_BASE_URL_CTA = (() => {
+    const host = window.location.hostname || 'localhost';
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${host}:8080`;
+  })();
+
+  const ctaForm = document.getElementById('ctaForm');
+  const ctaEmail = document.getElementById('ctaEmail');
+  const ctaSubmit = document.getElementById('ctaSubmit');
+  const ctaMessage = document.getElementById('ctaMessage');
+
+  ctaForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = ctaEmail.value.trim();
+    if (!email) return;
+
+    ctaSubmit.disabled = true;
+    ctaSubmit.textContent = 'Enviando...';
+    ctaMessage.className = 'hidden mt-4 text-sm font-medium px-4 py-2 rounded-lg';
+
+    try {
+      const response = await fetch(`${API_BASE_URL_CTA}/api/onboarding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'landing-cta' })
+      });
+
+      if (response.status === 201) {
+        ctaMessage.textContent = '¡Gracias! Te has unido a la lista de espera correctamente.';
+        ctaMessage.className = 'mt-4 text-sm font-medium px-4 py-2 rounded-lg bg-verde-100 text-verde-800';
+        ctaForm.reset();
+      } else if (response.status === 409) {
+        ctaMessage.textContent = 'Este correo ya se encuentra en nuestra lista de espera.';
+        ctaMessage.className = 'mt-4 text-sm font-medium px-4 py-2 rounded-lg bg-amber-100 text-amber-800';
+      } else {
+        throw new Error('Error en el servidor');
+      }
+    } catch (error) {
+      ctaMessage.textContent = 'Hubo un error al procesar tu solicitud. Intenta nuevamente más tarde.';
+      ctaMessage.className = 'mt-4 text-sm font-medium px-4 py-2 rounded-lg bg-red-100 text-red-800';
+    } finally {
+      ctaSubmit.disabled = false;
+      ctaSubmit.textContent = 'Reservar mi lugar';
+    }
+  });
+</script>
