@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal
-from scoring.calculateTerraScore import calculate_terra_score
+from scoring.calculateTerraScore import calculate_terra_score, StageType, RiskLevel
 from scoring.rag import RagStore
 
 @dataclass
@@ -9,12 +9,12 @@ class RiskInput:
     debt_ratio: float
     location_score: float
     sponsor_track_record: float
-    project_stage: Literal["land", "pre-sale", "construction", "stabilized"]
+    project_stage: StageType
 
 @dataclass
 class EngineOutput:
     risk_score: float
-    risk_level: Literal["low", "medium", "high"]
+    risk_level: RiskLevel
     confidence: float
     recommendations: list[str]
 
@@ -22,10 +22,11 @@ class TerraScoringEngine:
     def __init__(self, rag_store: RagStore) -> None:
         self.rag_store = rag_store
 
-    def score(self, risk_input: RiskInput) -> EngineOutput:
-        # Obtenemos el contexto (ajustes y confianza) desde el RAG/DB
-        rag_context = self.rag_store.get_risk_context(risk_input.project_stage)
-        
+    async def score(self, risk_input: RiskInput, trace_id: str | None = None) -> EngineOutput:
+        # 1. Obtener contexto de riesgo sin bloquear el event loop
+        rag_context = await self.rag_store.get_risk_context(risk_input.project_stage, trace_id=trace_id)
+
+        # 2. Cálculo puro y determinista
         score_result = calculate_terra_score(
             ltv=risk_input.ltv,
             debt_ratio=risk_input.debt_ratio,
@@ -38,7 +39,7 @@ class TerraScoringEngine:
 
         recommendations = list(rag_context["default_recommendations"])
 
-        # Lógica de recomendaciones dinámicas basada en umbrales
+        # 3. Reglas de negocio sobre umbrales
         if risk_input.debt_ratio > 65:
             recommendations.append("Lower debt ratio before opening the round.")
         if risk_input.ltv > 75:
@@ -48,27 +49,24 @@ class TerraScoringEngine:
         if risk_input.sponsor_track_record < 55:
             recommendations.append("Request stronger sponsor guarantees.")
 
-        # Añadimos recomendaciones que vienen del backend/mercado
         recommendations.extend(rag_context["backend_recommendations"])
-        
-        # Eliminamos duplicados manteniendo el orden
         unique_recommendations = list(dict.fromkeys(recommendations))
 
-        # Guardamos la evaluación en SQLite para historial
-        self.rag_store.save_evaluation(
+        # 4. Persistencia asíncrona en base de datos
+        await self.rag_store.save_evaluation(
             project_stage=risk_input.project_stage,
             ltv=risk_input.ltv,
             debt_ratio=risk_input.debt_ratio,
             location_score=risk_input.location_score,
             sponsor_track_record=risk_input.sponsor_track_record,
-            risk_score=score_result["risk_score"],
-            risk_level=score_result["risk_level"],
-            confidence=score_result["confidence"],
+            risk_score=float(score_result["risk_score"]),
+            risk_level=str(score_result["risk_level"]),
+            confidence=float(score_result["confidence"]),
         )
 
         return EngineOutput(
-            risk_score=score_result["risk_score"],
-            risk_level=score_result["risk_level"],
-            confidence=score_result["confidence"],
+            risk_score=float(score_result["risk_score"]),
+            risk_level=score_result["risk_level"], # type: ignore
+            confidence=float(score_result["confidence"]),
             recommendations=unique_recommendations,
         )

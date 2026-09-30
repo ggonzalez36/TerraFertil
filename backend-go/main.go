@@ -1,61 +1,96 @@
 package main
 
 import (
- "log"
- "net/http"
- "os"
+	"context"
+	"errors"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
- "terrafertil/backend-go/internal/api"
- "terrafertil/backend-go/internal/store"
+	"terrafertil/backend-go/internal/adapter/ai"
+	"terrafertil/backend-go/internal/api"
+	"terrafertil/backend-go/internal/service"
+	"terrafertil/backend-go/internal/store"
 )
 
 func main() {
- port := getenv("PORT", "8080")
- aiServiceURL := getenv("AI_SERVICE_URL", "http://localhost:8001")
- databasePath := getenv("DATABASE_PATH", "./terrafertil.db")
+	port := getenv("PORT", "8080")
+	aiServiceURL := getenv("AI_SERVICE_URL", "http://localhost:8001")
+	databasePath := getenv("DATABASE_PATH", "./terrafertil.db")
+	allowedOrigin := getenv("ALLOWED_ORIGIN", "*")
 
- db, err := store.OpenSQLite(databasePath)
- if err != nil {
-  log.Fatalf("could not open database: %v", err)
- }
- defer db.Close()
+	// 1. Persistencia SQLite con pool afinado
+	db, err := store.OpenSQLite(databasePath)
+	if err != nil {
+		api.Logger.Error("could not open database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
 
- waitlistStore, err := store.NewWaitlistStore(db)
- if err != nil {
-  log.Fatalf("could not initialize waitlist store: %v", err)
- }
+	waitlistStore, err := store.NewWaitlistStore(db)
+	if err != nil {
+		api.Logger.Error("could not initialize waitlist store", "error", err)
+		os.Exit(1)
+	}
 
- mux := http.NewServeMux()
- server := api.NewServer(aiServiceURL, waitlistStore)
- server.RegisterRoutes(mux)
+	// 2. Adapters & Services
+	projectService := service.NewProjectService()
+	aiClient := ai.NewResilientAIClient(aiServiceURL, 3, 10*time.Second)
 
- handler := withCORS(mux)
+	// 3. Routing & Middlewares
+	mux := http.NewServeMux()
+	server := api.NewServer(aiClient, waitlistStore, projectService)
+	server.RegisterRoutes(mux)
 
- log.Printf("backend-go listening on :%s", port)
- log.Printf("using ai service: %s", aiServiceURL)
- log.Printf("using sqlite database: %s", databasePath)
- if err := http.ListenAndServe(":"+port, handler); err != nil {
-  log.Fatalf("server stopped: %v", err)
- }
-}
+	handler := api.RequestIDMiddleware(
+		api.ObservabilityMiddleware(
+			api.SecurityHeadersMiddleware(allowedOrigin)(mux),
+		),
+	)
 
-func withCORS(next http.Handler) http.Handler {
- return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-  w.Header().Set("Access-Control-Allow-Origin", "*")
-  w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-  w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	// 4. Servidor HTTP de producción con timeouts estrictos
+	httpServer := &http.Server{
+		Addr:              ":" + port,
+		Handler:           handler,
+		ReadHeaderTimeout: 2 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 
-  if r.Method == http.MethodOptions {
-   w.WriteHeader(http.StatusNoContent)
-   return
-  }
-  next.ServeHTTP(w, r)
- })
+	// 5. Arranque y Graceful Shutdown
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		api.Logger.Info("backend-go listening",
+			"port", port,
+			"ai_service", aiServiceURL,
+			"database", databasePath,
+		)
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			api.Logger.Error("server crashed", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-stopChan
+	api.Logger.Info("shutting down server gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		api.Logger.Error("forced shutdown error", "error", err)
+	}
+	api.Logger.Info("backend-go stopped cleanly")
 }
 
 func getenv(key string, fallback string) string {
- if v := os.Getenv(key); v != "" {
-  return v
- }
- return fallback
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
