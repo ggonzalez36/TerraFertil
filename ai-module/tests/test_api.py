@@ -1,21 +1,28 @@
-import pytest
+import unittest
 from fastapi.testclient import TestClient
 from main import app
 
-def test_health_endpoints():
-    with TestClient(app) as client:
-        resp = client.get("/health")
-        assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+class TestAPIEndpoints(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.client = TestClient(app)
 
-        liveness = client.get("/health/liveness")
-        assert liveness.status_code == 200
+    @classmethod
+    def tearDownClass(cls):
+        cls.client.close()
 
-        readiness = client.get("/health/readiness")
-        assert readiness.status_code == 200
+    def test_health_endpoints(self):
+        resp = self.client.get("/health")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {"status": "ok"})
 
-def test_predict_risk_success():
-    with TestClient(app) as client:
+        liveness = self.client.get("/health/liveness")
+        self.assertEqual(liveness.status_code, 200)
+
+        readiness = self.client.get("/health/readiness")
+        self.assertEqual(readiness.status_code, 200)
+
+    def test_predict_risk_success(self):
         payload = {
             "ltv": 55.0,
             "debtRatio": 40.0,
@@ -23,17 +30,16 @@ def test_predict_risk_success():
             "sponsorTrackRecord": 80.0,
             "projectStage": "construction"
         }
-        resp = client.post("/predict-risk", json=payload, headers={"X-Request-ID": "test-trace-123"})
-        assert resp.status_code == 200
+        resp = self.client.post("/predict-risk", json=payload, headers={"X-Request-ID": "test-trace-123"})
+        self.assertEqual(resp.status_code, 200)
         data = resp.json()
-        assert "riskScore" in data
-        assert "riskLevel" in data
-        assert "confidence" in data
-        assert "recommendations" in data
-        assert resp.headers.get("X-Request-ID") == "test-trace-123"
+        self.assertIn("riskScore", data)
+        self.assertIn("riskLevel", data)
+        self.assertIn("confidence", data)
+        self.assertIn("recommendations", data)
+        self.assertEqual(resp.headers.get("X-Request-ID"), "test-trace-123")
 
-def test_predict_risk_validation_error():
-    with TestClient(app) as client:
+    def test_predict_risk_validation_error(self):
         payload = {
             "ltv": 150.0, # Invalid > 100
             "debtRatio": 40.0,
@@ -41,5 +47,8 @@ def test_predict_risk_validation_error():
             "sponsorTrackRecord": 80.0,
             "projectStage": "construction"
         }
-        resp = client.post("/predict-risk", json=payload)
-        assert resp.status_code == 422 # Unprocessable Entity by Pydantic
+        resp = self.client.post("/predict-risk", json=payload)
+        self.assertEqual(resp.status_code, 422)
+
+if __name__ == "__main__":
+    unittest.main()

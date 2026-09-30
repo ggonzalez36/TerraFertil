@@ -18,6 +18,25 @@ class RagStore:
         self._cached_avg_return: float | None = None
         self._last_cache_time: float = 0.0
         self._cache_lock = asyncio.Lock()
+        self._ensure_schema_sync()
+
+    def _ensure_schema_sync(self) -> None:
+        import sqlite3
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS ai_risk_evaluations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_stage TEXT NOT NULL,
+                    ltv REAL NOT NULL,
+                    debt_ratio REAL NOT NULL,
+                    location_score REAL NOT NULL,
+                    sponsor_track_record REAL NOT NULL,
+                    risk_score REAL NOT NULL,
+                    risk_level TEXT NOT NULL,
+                    confidence REAL NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+            """)
 
     @classmethod
     def from_env(cls) -> "RagStore":
