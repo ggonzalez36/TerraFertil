@@ -2,30 +2,32 @@ package store
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
+	"terrafertil/backend-go/internal/adapter/sqlite"
+	"terrafertil/backend-go/internal/domain"
 )
 
-var ErrDuplicateEmail = errors.New("email already exists")
+var ErrDuplicateEmail = domain.ErrDuplicateEmail
 
 type WaitlistStore struct {
-	db *sql.DB
+	repo *sqlite.WaitlistRepository
 }
 
 func OpenSQLite(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", path)
+	// Enable WAL and 5s busy timeout to handle concurrent transactions without locking errors
+	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)", path)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := db.Exec("PRAGMA journal_mode = WAL;"); err != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("set pragma journal_mode: %w", err)
-	}
+	// SQLite single-writer pool configuration
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(time.Hour)
 
 	if err := db.Ping(); err != nil {
 		_ = db.Close()
@@ -35,49 +37,6 @@ func OpenSQLite(path string) (*sql.DB, error) {
 	return db, nil
 }
 
-func NewWaitlistStore(db *sql.DB) (*WaitlistStore, error) {
-	s := &WaitlistStore{db: db}
-	if err := s.migrate(); err != nil {
-		return nil, err
-	}
-	return s, nil
-}
-
-func (s *WaitlistStore) migrate() error {
-	const schema = `
-CREATE TABLE IF NOT EXISTS waitlist_signups (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL UNIQUE,
-    source TEXT NOT NULL DEFAULT 'landing',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-`
-	_, err := s.db.Exec(schema)
-	if err != nil {
-		return fmt.Errorf("migrate waitlist_signups: %w", err)
-	}
-	return nil
-}
-
-func (s *WaitlistStore) CreateSignup(email string, source string) (int64, time.Time, error) {
-	now := time.Now().UTC()
-	res, err := s.db.Exec(
-		"INSERT INTO waitlist_signups(email, source, created_at) VALUES (?, ?, ?)",
-		email,
-		source,
-		now,
-	)
-	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "unique") {
-			return 0, time.Time{}, ErrDuplicateEmail
-		}
-		return 0, time.Time{}, err
-	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, time.Time{}, err
-	}
-
-	return id, now, nil
+func NewWaitlistStore(db *sql.DB) (*sqlite.WaitlistRepository, error) {
+	return sqlite.NewWaitlistRepository(db)
 }
